@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="mat_kapital_calc:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/mat_kapital_calc_jar</output-path>
+    <root id="archive" name="mat_kapital_calc.jar">
+      <element id="module-output" name="mat_kapital_calc" />
+    </root>
+  </artifact>
+</component>
