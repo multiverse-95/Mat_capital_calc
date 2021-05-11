@@ -1,4 +1,4 @@
-package sample;
+package mat_kap_calc;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

@@ -1,9 +1,8 @@
-package sample;
+package mat_kap_calc;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -41,17 +40,17 @@ public class MatCapCalc_Controller {
     @FXML
     void initialize() {
 
-        //set Digits only and set rank number 3
+        // Запрет на ввод символов, кроме цифр. Деление на разряды чисел.(по 3)
         setSpaceDigits(apartment_cost_t);
         setSpaceDigits(matCap_cost_t);
         setSpaceDigits(count_family_t);
         setSpaceDigits(count_parent_t);
 
-        //set button action event
+        // Событие на кнопку
         sumCap_b.setOnAction(event -> {
-
+            // Проверка на пустые поля. Если есть хотя бы одно пустое поле, то вывести сообщение.
             if (apartment_cost_t.getText().isEmpty() || matCap_cost_t.getText().isEmpty() || count_family_t.getText().isEmpty() || count_parent_t.getText().isEmpty() ){
-                //error
+                // Сообщение об ошибке
                 Alert alert =new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Ошибка");
                 alert.setHeaderText("Одно из полей не заполнено!");
@@ -63,14 +62,16 @@ public class MatCapCalc_Controller {
                     }
                 });
             } else {
+                // Иначе удаляем все пробелы в строках
                 //get data from textfield and parse to double
                 double apart_cost = Double.parseDouble(apartment_cost_t.getText().replaceAll("\\s", ""));
                 double matCap_cost = Double.parseDouble(matCap_cost_t.getText().replaceAll("\\s", ""));
                 double count_family = Double.parseDouble(count_family_t.getText().replaceAll("\\s", ""));
                 double count_parent = Double.parseDouble(count_parent_t.getText().replaceAll("\\s", ""));
                 //System.out.println(share_calc(apart_cost, matCap_cost, count_family,count_parent));
-                // if Apartament cost < matCap cost
+                // Если стоимость квартиры < Материнского капитала
                 if (apart_cost<=matCap_cost){
+                    // Выводим ошибку
                     Alert alert =new Alert(Alert.AlertType.ERROR);
                     alert.setTitle("Ошибка");
                     alert.setHeaderText("Стоимость квартиры не может быть меньше материнского капитала!");
@@ -82,9 +83,11 @@ public class MatCapCalc_Controller {
                         }
                     });
                 } else {
+                    // Иначе рассчитываем долю на каждого члена семьи
                     double prava_child=share_calc(apart_cost, matCap_cost, count_family,count_parent);
-                    double part_every_child=matCap_cost/count_family;
+                    double part_every_child=matCap_cost/count_family; // Получаем  минимальную долю на каждого ребенка
 
+                    // Округляем
                     BigDecimal part_every_child_bd = new BigDecimal(part_every_child);
                     part_every_child_bd = part_every_child_bd.setScale(3, RoundingMode.HALF_UP);
                     part_every_child=Double.parseDouble(part_every_child_bd.toString());
@@ -93,10 +96,10 @@ public class MatCapCalc_Controller {
                     prava_child_bd = prava_child_bd.setScale(3, RoundingMode.HALF_UP);
                     prava_child=Double.parseDouble(prava_child_bd.toString());
 
-
+                    // Форматируем числа под формат ru
                     String part_every_child_str=formatNumber(part_every_child);
                     String prava_child_str=formatNumber(prava_child);
-
+                    // Проверяем, нарушены ли права ребенка
                     if (prava_child>=part_every_child){
                         Alert alert =new Alert(Alert.AlertType.INFORMATION);
                         alert.setTitle("Информация");
@@ -129,10 +132,12 @@ public class MatCapCalc_Controller {
         });
     }
 
+    // Функция для проверки на цифры (не используется, т.к. такой функционал есть в функции setSpaceDigits)
     public boolean isOnlyDigits(String str) {
         return str.matches("[\\d]+");
     }
 
+    // Функция для форматирования чисел
     public String formatNumber(Double number_ch){
         Locale loc = new Locale("ru");
         NumberFormat formatter = NumberFormat.getInstance(loc);
@@ -140,33 +145,36 @@ public class MatCapCalc_Controller {
         //System.out.println(loc.getLanguage() + ": " + result);
         return result;
     }
-    //set only digits funct
+
+    // Функция для удаления всех лишних символов, кроме цифр. А также функция делит число на разряды.
     public void setSpaceDigits(TextField textField){
-        final char seperatorChar = ' ';
+        final char seperatorChar = ' '; // Устанавливаем разделитель для разряда
+        // Устанавливаем паттерн для регулярных выражений. Реглярные выражения проверяют наличие цифр
         final Pattern p = Pattern.compile("[0-9" + seperatorChar + "]*");
+        // Устнавливам формат для текстового поля
         textField.setTextFormatter(new TextFormatter<>(c -> {
             if (!c.isContentChange()) {
-                return c; // no need for modification, if only the selection changes
+                return c; // Если нет изменений в текстовом поле
             }
             String newText = c.getControlNewText();
             if (newText.isEmpty()) {
                 return c;
             }
             if (!p.matcher(newText).matches()) {
-                return null; // invalid change
+                return null; // Если не нашлось совпадений с паттерном
             }
 
-            // invert everything before the range
+            // Разворачиваем строку
             int suffixCount = c.getControlText().length() - c.getRangeEnd();
             int digits = suffixCount - suffixCount / 4;
             StringBuilder sb = new StringBuilder();
 
-            // insert seperator just before caret, if necessary
+            // Проверяем на разряды. Если более 3 цифр подряд, то ставим разделитель
             if (digits % 3 == 0 && digits > 0 && suffixCount % 4 != 0) {
                 sb.append(seperatorChar);
             }
 
-            // add the rest of the digits in reversed order
+            // Добавляем остальные цифры в обратном порядке
             for (int i = c.getRangeStart() + c.getText().length() - 1; i >= 0; i--) {
                 char letter = newText.charAt(i);
                 if (Character.isDigit(letter)) {
@@ -178,14 +186,14 @@ public class MatCapCalc_Controller {
                 }
             }
 
-            // remove seperator char, if added as last char
+            // Удаляем разделитель, если последняя цифра
             if (digits % 3 == 0) {
                 sb.deleteCharAt(sb.length() - 1);
             }
             sb.reverse();
             int length = sb.length();
 
-            // replace with modified text
+            // Заменяем модифицированным текстом
             c.setRange(0, c.getRangeEnd());
             c.setText(sb.toString());
             c.setCaretPosition(length);
@@ -195,30 +203,33 @@ public class MatCapCalc_Controller {
         }));
     }
 
+    // Функция для подсчета долей для материнского капитала
     public double share_calc(double apart_cost, double matCap_cost, double count_family, double count_parent){
+        // Размер мат.капитала делим на стоимость квартиры и на кол-во членов семьи
         double share_every_child=matCap_cost/apart_cost/count_family;
         double share_every_parent=0.00;
         double difference_m=apart_cost-matCap_cost;
         double difference_part=0.00;
-        // Child
+        // Округляем долю на каждого члена семьи в верхнюю сторону
         BigDecimal every_child = new BigDecimal(share_every_child);
         every_child = every_child.setScale(3, RoundingMode.UP);
         double every_child_double=Double.parseDouble(every_child.toString());
 
-        // Check prava child
+        // Проверяем права ребенка
         double prava_child=0.0;
         prava_child=apart_cost*every_child_double;
 
-        // Parent
+        // Считаем долю родителей
         share_every_parent=1-(every_child_double*(count_family-count_parent));
         BigDecimal every_parent = new BigDecimal(share_every_parent);
         //every_parent = BigDecimal.valueOf(0.4974);
+        // Округляем
         every_parent = every_parent.setScale(3, RoundingMode.HALF_UP);
         double every_parent_double=Double.parseDouble(every_parent.toString());
         String text_res_child="";
         String text_res_parent="";
 
-        // Print data to textfield
+        // Выодим результаты в текстовую область
         for (int i=1; i<=count_family-count_parent; i++){
             //text_res_child+="Доля ребенка "+i+": "+every_child_double+" (Без округления: "+share_every_child+")"+"\n";
             text_res_child+="Доля ребенка "+i+": "+every_child_double+" ("+Math.round(every_child_double*1000)+"/1000)"+"\n";
@@ -234,13 +245,14 @@ public class MatCapCalc_Controller {
                 text_res_parent+="Доля родителя "+i+": "+every_child_double+" ("+Math.round(every_child_double*1000)+"/1000)"+"\n";
             }
         }
-        // difference part
+        // Разница между капиталом и суммой квартиры
         difference_part=1-(every_child_double*count_family);
         BigDecimal difference_part_bd = new BigDecimal(difference_part);
         difference_part_bd = difference_part_bd.setScale(3, RoundingMode.HALF_UP);
         double difference_part_double=Double.parseDouble(difference_part_bd.toString());
         String difference_m_str=formatNumber(difference_m);
         //result_ta.setText("Разница между капиталом и суммой квартиры: "+Math.round(difference_m)+
+        // Выводим результат в текстовую область
         result_ta.setText("Разница между капиталом и суммой квартиры: "+difference_m_str+" руб."+
                 "\nДоля членов семьи:\n"+text_res_child+text_res_parent+"\n"+
                 "Доля родителей: "+difference_part_double+" ("+Math.round(difference_part_double*1000)+"/1000)");
